@@ -2,7 +2,6 @@ import cv2
 import os
 import time
 import json
-from playsound import playsound
 import episode_manager.util as util
 import episode_manager.tactile as tactile
 
