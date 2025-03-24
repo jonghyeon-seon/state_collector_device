@@ -6,7 +6,13 @@ def main():
     RECORDING_START_SOUND = "assets/sounds/start_sound.mp3"
     RECORDING_END_SOUND = "assets/sounds/end_sound.mp3"
     
-    episode_manager = EpisodeManager(DATASET_PATH, RECORDING_START_SOUND, RECORDING_END_SOUND)
+    episode_manager = EpisodeManager(
+        DATASET_PATH, 
+        RECORDING_START_SOUND, 
+        RECORDING_END_SOUND, 
+        fps=20.0, 
+        record_duration=4.0
+        )
     
     intro_message = (
         "안내: 'enter'를 누르면 에피소드 녹화가 시작됩니다.\n"

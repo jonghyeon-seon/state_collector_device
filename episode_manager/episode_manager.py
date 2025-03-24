@@ -82,10 +82,12 @@ class EpisodeManager:
     """
     에피소드 폴더 생성 및 녹화 실행, 그리고 사용자의 저장/삭제 선택을 관리하는 클래스
     """
-    def __init__(self, base_path, start_sound, end_sound):
+    def __init__(self, base_path, start_sound, end_sound, fps=20.0, record_duration=4.0):
         self.base_path = base_path
         self.start_sound = start_sound
         self.end_sound = end_sound
+        self.fps = fps
+        self.record_duration = record_duration
         if not os.path.exists(base_path):
             os.makedirs(base_path)
     
@@ -107,7 +109,7 @@ class EpisodeManager:
         util.play_sound(self.start_sound)
         print("녹화 시작")
         
-        recorder = EpisodeRecorder(episode_dir)
+        recorder = EpisodeRecorder(episode_dir, self.record_duration, self.fps)
         try:
             recorder.prepare_resources()
         except Exception as e:
