@@ -2,6 +2,7 @@ import cv2
 import os
 import time
 import json
+import random
 import threading
 from queue import Queue
 import episode_manager.util as util
@@ -127,10 +128,12 @@ class EpisodeManager:
     Class that manages the creation of episode folders, execution of recordings,
     and the decision to save or delete recordings.
     """
-    def __init__(self, base_path, start_sound, end_sound, fps=20.0, record_duration=4.0):
+    def __init__(self, base_path, start_sound_path, end_sound_path, fps=20.0, record_duration=4.0):
         self.base_path = base_path
-        self.start_sound = start_sound
-        self.end_sound = end_sound
+        self.start_sound_path = start_sound_path
+        self.end_sound_path = end_sound_path
+        self.start_sound_list = os.listdir(start_sound_path)
+        self.end_sound_list = os.listdir(end_sound_path)
         self.fps = fps
         self.record_duration = record_duration
         self.intro_message = f"""
@@ -157,7 +160,7 @@ class EpisodeManager:
         input("Press enter when ready: ")
         
         print("     => Preparing for recording")
-        util.play_sound(self.start_sound)
+        util.play_sound(os.path.join(self.start_sound_path, self.start_sound_list[random.randint(0, len(self.start_sound_list) - 1)]))
         print("Starting recording")
         
         recorder = EpisodeRecorder(episode_dir, self.record_duration, self.fps)
@@ -172,7 +175,7 @@ class EpisodeManager:
         recorder.save_tactile_data()
         
         print("Recording finished")
-        util.play_sound(self.end_sound)
+        util.play_sound(os.path.join(self.end_sound_path, self.end_sound_list[random.randint(0, len(self.end_sound_list) - 1)]))
         print("================")
         
         return True, idx

@@ -4,13 +4,13 @@ from episode_manager import EpisodeManager
 
 def main():
     DATASET_PATH = "dataset/holiworld"
-    RECORDING_START_SOUND = "assets/sounds/start_sound.mp3"
-    RECORDING_END_SOUND = "assets/sounds/end_sound.mp3"
+    RECORDING_START_SOUND_PATH = "assets/sounds/start"
+    RECORDING_END_SOUND_PATH = "assets/sounds/end"
     
     episode_manager = EpisodeManager(
         DATASET_PATH, 
-        RECORDING_START_SOUND, 
-        RECORDING_END_SOUND, 
+        RECORDING_START_SOUND_PATH, 
+        RECORDING_END_SOUND_PATH, 
         fps=20.0, 
         record_duration=4.0
     )
