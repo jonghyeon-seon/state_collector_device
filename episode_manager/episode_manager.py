@@ -6,17 +6,11 @@ from playsound import playsound
 import episode_manager.util as util
 import episode_manager.tactile as tactile
 
-INTRO_MESSAGE = (
-    "안내: 'enter'를 누르면 에피소드 녹화가 시작됩니다.\n"
-    "  - 시작음이 울리고 4초 후에 자동으로 에피소드 녹화가 종료됩니다.\n"
-    "녹화본이 마음에 들지 않으면 'del'을 입력하여 삭제할 수 있고,\n"
-    "계속 진행하려면 'enter'를 입력하면 다음 에피소드가 저장됩니다.\n"
-)
 
 class EpisodeRecorder:
     """
-    에피소드 녹화를 담당하는 클래스.
-    초기화 단계, 녹화 단계, 종료 및 데이터 저장 단계를 메서드로 분리하여 관리.
+    Class responsible for recording an episode.
+    Manages the initialization, recording, termination, and data saving phases through separate methods.
     """
     def __init__(self, episode_dir, record_duration=4.0, fps=20.0):
         self.episode_dir = episode_dir
@@ -32,18 +26,23 @@ class EpisodeRecorder:
         self.left_video_path = os.path.join(episode_dir, "left_video.mp4")
         self.right_video_path = os.path.join(episode_dir, "right_video.mp4")
         self.tactile_json_path = os.path.join(episode_dir, "tactile.json")
-        self.intro_message = INTRO_MESSAGE
+        self.intro_message = f"""
+            Notice: The recording will automatically stop after {self.record_duration} seconds.
+            It will record at {self.fps} fps.
+            If you wish to delete the recording, type 'del'.
+            To continue, press 'enter'.
+            """
     
     def prepare_resources(self):
-        """카메라와 비디오 라이터를 초기화하는 단계"""
+        """Initialize the camera and the video writers."""
         self.cap = util.get_stereo_camera()
         if not self.cap:
-            raise RuntimeError("스테레오 카메라를 찾을 수 없습니다.")
+            raise RuntimeError("Stereo camera not found.")
         
         ret, frame = self.cap.read()
         if not ret:
             self.cap.release()
-            raise RuntimeError("카메라에서 프레임을 읽지 못했습니다.")
+            raise RuntimeError("Failed to read a frame from the camera.")
         
         self.height, width, _ = frame.shape
         self.half_width = width // 2
@@ -52,20 +51,20 @@ class EpisodeRecorder:
         self.right_writer = cv2.VideoWriter(self.right_video_path, self.fourcc, self.fps, (self.half_width, self.height))
     
     def record(self):
-        """녹화 시간 동안 카메라 프레임과 촉각 데이터를 수집하여 저장"""
+        """Collect and save camera frames and tactile data for the duration of the recording."""
         start_time = time.time()
         while time.time() - start_time < self.record_duration:
             ret, frame = self.cap.read()
             if not ret:
-                print("Error: 프레임 읽기 실패")
+                print("Error: Failed to read frame")
                 break
-            # 스테레오 프레임을 좌/우로 분리
+            # Separate the stereo frame into left and right frames
             left_frame = frame[:, :self.half_width]
             right_frame = frame[:, self.half_width:]
             self.left_writer.write(left_frame)
             self.right_writer.write(right_frame)
             
-            # 촉각 센서 데이터 수집 및 파싱
+            # Collect and parse the tactile sensor data
             tactile_raw = tactile.get_tactile_stream()
             tactile_parsed = tactile.parse_tactile_data(tactile_raw)
             self.tactile_data_list.append(tactile_parsed)
@@ -73,7 +72,7 @@ class EpisodeRecorder:
             time.sleep(1.0 / self.fps)
     
     def cleanup_resources(self):
-        """카메라와 비디오 라이터 자원을 해제"""
+        """Release the camera and the video writer resources."""
         if self.cap:
             self.cap.release()
         if self.left_writer:
@@ -82,13 +81,14 @@ class EpisodeRecorder:
             self.right_writer.release()
     
     def save_tactile_data(self):
-        """수집된 촉각 데이터를 JSON 파일로 저장"""
+        """Save the collected tactile data as a JSON file."""
         with open(self.tactile_json_path, "w") as f:
             json.dump(self.tactile_data_list, f)
 
 class EpisodeManager:
     """
-    에피소드 폴더 생성 및 녹화 실행, 그리고 사용자의 저장/삭제 선택을 관리하는 클래스
+    Class that manages the creation of episode folders, execution of recordings,
+    and user decisions to save or delete the recordings.
     """
     def __init__(self, base_path, start_sound, end_sound, fps=20.0, record_duration=4.0):
         self.base_path = base_path
@@ -100,35 +100,35 @@ class EpisodeManager:
             os.makedirs(base_path)
     
     def get_next_episode_dir(self):
-        """다음 사용 가능한 episode 폴더를 생성하고, index와 폴더 경로를 반환"""
+        """Generate the next available episode folder and return its index and path."""
         idx = util.get_next_episode_index(self.base_path)
         episode_dir = os.path.join(self.base_path, f"epi_{idx:06d}")
         os.makedirs(episode_dir)
         return idx, episode_dir
     
     def run_episode(self):
-        """하나의 에피소드를 녹화하는 전체 과정을 실행"""
+        """Execute the complete process of recording a single episode."""
         idx, episode_dir = self.get_next_episode_dir()
         print("\n================")
         print(f"[Episode {idx}]")
-        input("준비되었으면 enter를 눌러주세요: ")
+        input("Press enter when ready: ")
         
-        print("녹화 준비")
+        print("Preparing for recording")
         util.play_sound(self.start_sound)
-        print("녹화 시작")
+        print("Starting recording")
         
         recorder = EpisodeRecorder(episode_dir, self.record_duration, self.fps)
         try:
             recorder.prepare_resources()
         except Exception as e:
-            print(f"자원 준비 실패: {e}")
+            print(f"Resource preparation failed: {e}")
             return False, idx
         
         recorder.record()
         recorder.cleanup_resources()
         recorder.save_tactile_data()
         
-        print("녹화 종료")
+        print("Recording finished")
         util.play_sound(self.end_sound)
         print("================")
         

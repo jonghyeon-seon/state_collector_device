@@ -1,13 +1,12 @@
 import os
 
 def get_tactile_stream():
-    """촉각 센서 스트림 데이터를 시뮬레이션(576바이트)"""
     return os.urandom(576)
 
 def parse_tactile_data(data):
-    """576바이트 데이터를 [left/right][24][4][3] 구조의 3차원 리스트로 파싱"""
+    """576 bytes data to [left/right][24][4][3] 3D list"""
     if len(data) != 576:
-        raise ValueError("데이터 길이가 올바르지 않습니다.")
+        raise ValueError("Tactile data length is not valid.")
     left_data = data[:288]
     right_data = data[288:]
     
