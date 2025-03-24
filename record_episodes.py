@@ -14,14 +14,7 @@ def main():
         record_duration=4.0
         )
     
-    intro_message = (
-        "안내: 'enter'를 누르면 에피소드 녹화가 시작됩니다.\n"
-        "  - 시작음이 울리고 4초 후에 자동으로 에피소드 녹화가 종료됩니다.\n"
-        "녹화본이 마음에 들지 않으면 'del'을 입력하여 삭제할 수 있고,\n"
-        "계속 진행하려면 'enter'를 입력하면 다음 에피소드가 저장됩니다.\n"
-    )
-    print(intro_message)
-    
+    print(episode_manager.intro_message)    
     while True:
         success, idx = episode_manager.run_episode()
         if not success:

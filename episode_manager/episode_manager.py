@@ -6,6 +6,13 @@ from playsound import playsound
 import episode_manager.util as util
 import episode_manager.tactile as tactile
 
+INTRO_MESSAGE = (
+    "안내: 'enter'를 누르면 에피소드 녹화가 시작됩니다.\n"
+    "  - 시작음이 울리고 4초 후에 자동으로 에피소드 녹화가 종료됩니다.\n"
+    "녹화본이 마음에 들지 않으면 'del'을 입력하여 삭제할 수 있고,\n"
+    "계속 진행하려면 'enter'를 입력하면 다음 에피소드가 저장됩니다.\n"
+)
+
 class EpisodeRecorder:
     """
     에피소드 녹화를 담당하는 클래스.
@@ -25,6 +32,7 @@ class EpisodeRecorder:
         self.left_video_path = os.path.join(episode_dir, "left_video.mp4")
         self.right_video_path = os.path.join(episode_dir, "right_video.mp4")
         self.tactile_json_path = os.path.join(episode_dir, "tactile.json")
+        self.intro_message = INTRO_MESSAGE
     
     def prepare_resources(self):
         """카메라와 비디오 라이터를 초기화하는 단계"""

@@ -2,6 +2,7 @@ import cv2
 import os
 from playsound import playsound
 
+
 def get_stereo_camera():
     """USB로 연결된 스테레오 카메라를 찾는다. (해상도 2560 픽셀 가정)"""
     max_index = 3
