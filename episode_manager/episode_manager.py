@@ -26,12 +26,6 @@ class EpisodeRecorder:
         self.left_video_path = os.path.join(episode_dir, "left_video.mp4")
         self.right_video_path = os.path.join(episode_dir, "right_video.mp4")
         self.tactile_json_path = os.path.join(episode_dir, "tactile.json")
-        self.intro_message = f"""
-            Notice: The recording will automatically stop after {self.record_duration} seconds.
-            It will record at {self.fps} fps.
-            If you wish to delete the recording, type 'del'.
-            To continue, press 'enter'.
-            """
     
     def prepare_resources(self):
         """Initialize the camera and the video writers."""
@@ -96,6 +90,12 @@ class EpisodeManager:
         self.end_sound = end_sound
         self.fps = fps
         self.record_duration = record_duration
+        self.intro_message = f"""
+            Notice: The recording will automatically stop after {self.record_duration} seconds.
+            It will record at {self.fps} fps.
+            If you wish to delete the recording, type 'del'.
+            To continue, press 'enter'.
+            """
         if not os.path.exists(base_path):
             os.makedirs(base_path)
     
