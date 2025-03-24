@@ -4,6 +4,7 @@ def get_tactile_stream():
     return os.urandom(576)
 
 def parse_tactile_data(data):
+    # return {"left": [[[0, 0, 0]]], "right": [[[0, 0, 0]]]}
     """576 bytes data to [left/right][24][4][3] 3D list"""
     if len(data) != 576:
         raise ValueError("Tactile data length is not valid.")
@@ -23,6 +24,6 @@ def parse_tactile_data(data):
                 row.append(sensor)
             nested.append(row)
         return nested
-
+    
     return {"left": bytes_to_nested_list(left_data),
             "right": bytes_to_nested_list(right_data)}

@@ -2,6 +2,8 @@ import cv2
 import os
 import time
 import json
+import threading
+from queue import Queue
 import episode_manager.util as util
 import episode_manager.tactile as tactile
 
@@ -9,7 +11,7 @@ import episode_manager.tactile as tactile
 class EpisodeRecorder:
     """
     Class responsible for recording an episode.
-    Manages the initialization, recording, termination, and data saving phases through separate methods.
+    Manages initialization, recording, termination, and data saving through separate methods.
     """
     def __init__(self, episode_dir, record_duration=4.0, fps=20.0):
         self.episode_dir = episode_dir
@@ -27,7 +29,7 @@ class EpisodeRecorder:
         self.tactile_json_path = os.path.join(episode_dir, "tactile.json")
     
     def prepare_resources(self):
-        """Initialize the camera and the video writers."""
+        """Initialize the camera and the VideoWriter objects."""
         self.cap = util.get_stereo_camera()
         if not self.cap:
             raise RuntimeError("Stereo camera not found.")
@@ -43,29 +45,70 @@ class EpisodeRecorder:
         self.left_writer = cv2.VideoWriter(self.left_video_path, self.fourcc, self.fps, (self.half_width, self.height))
         self.right_writer = cv2.VideoWriter(self.right_video_path, self.fourcc, self.fps, (self.half_width, self.height))
     
+    def write_frames_worker(self, frame_queue):
+        """
+        Background thread function that receives frames from the queue
+        and writes them to the video files.
+        """
+        while True:
+            item = frame_queue.get()
+            if item is None:  # Termination signal received, break out of the loop.
+                break
+            left_frame, right_frame = item
+            self.left_writer.write(left_frame)
+            self.right_writer.write(right_frame)
+    
     def record(self):
-        """Collect and save camera frames and tactile data for the duration of the recording."""
-        start_time = time.time()
-        while time.time() - start_time < self.record_duration:
+        """
+        Capture camera frames and tactile data during the recording period.
+        Offload the video writing task to a separate thread.
+        """
+        # Create a queue to store frames (max size of 10)
+        frame_queue = Queue(maxsize=10)
+        writer_thread = threading.Thread(target=self.write_frames_worker, args=(frame_queue,))
+        writer_thread.daemon = True  # Ensure the thread exits when the main thread exits.
+        writer_thread.start()
+        
+        # Using a high-precision timer with a mix of sleep and busy-wait
+        fps_interval = 1.0 / self.fps  # 예: 20fps이면 약 0.05초 간격
+        start_time = time.perf_counter()
+        next_frame_time = start_time
+        
+        while time.perf_counter() - start_time < self.record_duration:
+            now = time.perf_counter()
+            if now < next_frame_time:
+                while time.perf_counter() < next_frame_time:
+                    pass
+            current_timestamp = time.perf_counter() - start_time
+            next_frame_time += fps_interval
+            
             ret, frame = self.cap.read()
             if not ret:
                 print("Error: Failed to read frame")
                 break
-            # Separate the stereo frame into left and right frames
+            
+            # Split the frame into left and right parts
             left_frame = frame[:, :self.half_width]
             right_frame = frame[:, self.half_width:]
-            self.left_writer.write(left_frame)
-            self.right_writer.write(right_frame)
             
-            # Collect and parse the tactile sensor data
+            # Put the frames into the queue (wait if the queue is full)
+            frame_queue.put((left_frame, right_frame))
+            
+            # Process tactile data
             tactile_raw = tactile.get_tactile_stream()
             tactile_parsed = tactile.parse_tactile_data(tactile_raw)
-            self.tactile_data_list.append(tactile_parsed)
-            
-            time.sleep(1.0 / self.fps)
+            print(f'cur: {current_timestamp}')
+            self.tactile_data_list.append({
+                "timestamp": f'{current_timestamp:.2f}',
+                "data": tactile_parsed
+            })
+        
+        # Finish recording: send termination signal and wait for the thread to finish
+        frame_queue.put(None)
+        writer_thread.join()
     
     def cleanup_resources(self):
-        """Release the camera and the video writer resources."""
+        """Release the camera and VideoWriter resources."""
         if self.cap:
             self.cap.release()
         if self.left_writer:
@@ -78,10 +121,11 @@ class EpisodeRecorder:
         with open(self.tactile_json_path, "w") as f:
             json.dump(self.tactile_data_list, f)
 
+
 class EpisodeManager:
     """
     Class that manages the creation of episode folders, execution of recordings,
-    and user decisions to save or delete the recordings.
+    and the decision to save or delete recordings.
     """
     def __init__(self, base_path, start_sound, end_sound, fps=20.0, record_duration=4.0):
         self.base_path = base_path
@@ -112,7 +156,7 @@ class EpisodeManager:
         print(f"[Episode {idx}]")
         input("Press enter when ready: ")
         
-        print("Preparing for recording")
+        print("     => Preparing for recording")
         util.play_sound(self.start_sound)
         print("Starting recording")
         
