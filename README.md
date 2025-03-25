@@ -5,7 +5,7 @@ This repository contains the `record_episodes.py` script, which leverages the `E
 ## Features
 
 - **Episode Recording:** Records episodes with a set frame rate (`fps=20.0`) and duration (`record_duration=4.0` seconds).
-- **Audio Cues:** Plays a start sound (`assets/sounds/start_sound.mp3`) and an end sound (`assets/sounds/end_sound.mp3`) using the `playsound` package.
+- **Audio Cues:** Plays a start sounds (`assets/sounds/start`) and an end sounds (`assets/sounds`) using the `playsound` package.
 - **User Interaction:** Prompts the user after each recording to either save or delete the episode.
 - **Session Management:** Continues recording episodes until the user decides to exit.
 
