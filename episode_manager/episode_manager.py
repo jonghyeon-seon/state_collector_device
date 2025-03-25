@@ -161,7 +161,7 @@ class EpisodeManager:
         
         print("     => Preparing for recording")
         util.play_sound(os.path.join(self.start_sound_path, self.start_sound_list[random.randint(0, len(self.start_sound_list) - 1)]))
-        print("Starting recording")
+        print("     => Starting recording")
         
         recorder = EpisodeRecorder(episode_dir, self.record_duration, self.fps)
         try:
@@ -174,7 +174,7 @@ class EpisodeManager:
         recorder.cleanup_resources()
         recorder.save_tactile_data()
         
-        print("Recording finished")
+        print("     => Recording finished")
         util.play_sound(os.path.join(self.end_sound_path, self.end_sound_list[random.randint(0, len(self.end_sound_list) - 1)]))
         print("================")
         
