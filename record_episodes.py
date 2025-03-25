@@ -3,14 +3,14 @@ import shutil
 from episode_manager import EpisodeManager
 
 def main():
-    DATASET_PATH = "dataset/holiworld"
-    RECORDING_START_SOUND_PATH = "assets/sounds/start"
-    RECORDING_END_SOUND_PATH = "assets/sounds/end"
+    SAVE_PATH = "dataset/holiworld"
+    START_SOUND_PATH = "assets/sounds/start"
+    END_SOUND_PATH = "assets/sounds/end"
     
     episode_manager = EpisodeManager(
-        DATASET_PATH, 
-        RECORDING_START_SOUND_PATH, 
-        RECORDING_END_SOUND_PATH, 
+        SAVE_PATH, 
+        START_SOUND_PATH, 
+        END_SOUND_PATH, 
         fps=20.0, 
         record_duration=4.0
     )
@@ -24,7 +24,7 @@ def main():
             break
         
         user_choice = input("Press enter to save or type 'del' to delete: ").strip().lower()
-        episode_dir = os.path.join(DATASET_PATH, f"epi_{idx:06d}")
+        episode_dir = os.path.join(SAVE_PATH, f"epi_{idx:06d}")
         if user_choice == "del":
             shutil.rmtree(episode_dir)
             print(f"Episode {idx} has been deleted.")
