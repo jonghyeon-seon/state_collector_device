@@ -44,7 +44,7 @@ This repository contains the `record_episodes.py` script, which leverages the `E
   Begins recording an episode.
   Once the recording finishes, the user is prompted:
   - Save Episode: Simply press Enter.
-  - Delete Episode: Type del to remove the episode directory.
+  - Delete Episode: Type 'del' to remove the episode directory.
   The user is then asked whether to record the next episode or exit the program.
 ### Exit
-  If the user types exit at the prompt, the script terminates.
+  If the user types 'exit' at the prompt, the script terminates.
