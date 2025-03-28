@@ -22,8 +22,8 @@ This repository contains the `record_episodes.py` script, which leverages the `E
 - Clone the Repository:
 
   ```bash
-  git clone https://your-repository-url.git
-  cd your-repository-directory
+  git clone git@github.com:jonghyeon-seon/state_collector_device.git
+  cd state_collector_device
 
 - Install Dependencies:
   ```bash
