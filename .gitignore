@@ -1,2 +1,11 @@
 dataset/
 *.DS_Store
+*.json
+*.mp4
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+**/__pycache__
+**/.DS_Store
