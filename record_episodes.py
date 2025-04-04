@@ -1,18 +1,28 @@
 import os
 import shutil
 from episode_manager import EpisodeManager
+import argparse
 
 def main():
-    SAVE_PATH = "dataset/holiworld"
-    START_SOUND_PATH = "assets/sounds/start"
-    END_SOUND_PATH = "assets/sounds/end"
+    parser = argparse.ArgumentParser(description='Record episodes for a dataset.')
+    parser.add_argument('--save_path', type=str, default='dataset/holiworld', help='Path to save the dataset')
+    parser.add_argument('--start_sound_path', type=str, default='assets/sounds/start', help='Path to the start sound')
+    parser.add_argument('--end_sound_path', type=str, default='assets/sounds/end', help='Path to the end sound')
+    parser.add_argument('--tactile_port', type=str, default='/dev/ttyACM0', help='Path to the tactile port')
+    args = parser.parse_args()
+    
+    SAVE_PATH = args.save_path
+    START_SOUND_PATH = args.start_sound_path
+    END_SOUND_PATH = args.end_sound_path
+    TACTILE_PORT = args.tactile_port
     
     episode_manager = EpisodeManager(
         SAVE_PATH, 
         START_SOUND_PATH, 
         END_SOUND_PATH, 
+        tactile_port=TACTILE_PORT,
         fps=20.0, 
-        record_duration=4.0
+        record_duration=15.0
     )
     
     print(episode_manager.intro_message)
