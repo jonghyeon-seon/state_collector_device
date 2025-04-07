@@ -3,10 +3,17 @@ import os
 import time
 import json
 import random
+import shutil
 import threading
 from queue import Queue
+
+import numpy as np 
 import episode_manager.utils as utils
 from hday import Robot  
+
+import warnings
+warnings.filterwarnings("ignore")
+
 
 class EpisodeRecorder:
     def __init__(self, episode_dir, record_duration=4.0, fps=20.0, tactile_port="/dev/ttyACM0"):
@@ -63,7 +70,7 @@ class EpisodeRecorder:
             self.left_writer.write(left_frame)
             self.right_writer.write(right_frame)
     
-    def tactile_worker(self):
+    def tactile_worker(self, init_tactile_table=None):
         try:
             with Robot(self.tactile_port) as robot:
                 robot.request_robot_enable(True)
@@ -73,15 +80,20 @@ class EpisodeRecorder:
                     if sensor_bypass_id is not None and 128 <= sensor_bypass_id <= 139:
                         tactile_timestamp = time.perf_counter() - self.start_time
                         with self.tactile_lock:
+                            adjusted_data = sensor_bypass_data
+                            if init_tactile_table is not None:
+                                if sensor_bypass_id in init_tactile_table:
+                                    adjusted_data = sensor_bypass_data - init_tactile_table[sensor_bypass_id]
+
                             self.latest_tactile[sensor_bypass_id] = {
-                                "data": sensor_bypass_data,  # [16][3] 데이터
+                                "data": adjusted_data,  # [16][3] 데이터
                                 "timestamp": tactile_timestamp
                             }
                     time.sleep(0.001)
         except Exception as e:
             print("Tactile thread encountered error:", e)
             
-    def validate_sensors(self, validation_duration=5.0):
+    def validate_sensors(self, validation_duration=5.0, validation_threshold=6):
         print("Validating sensors...")
         collected_ids = set()
         self.tactile_stop_event.clear()  
@@ -102,26 +114,35 @@ class EpisodeRecorder:
         expected_ids = set(range(128, 140))  # 128~139
         missing_ids = expected_ids - collected_ids
         if missing_ids:
-            print("Validation failed. Missing sensors:", missing_ids)
-            return False
-        print("All sensors are working properly.")
-        return True
+            print("     => Validation failed. Missing sensors:", missing_ids)
+            return False, {}
+        
+        #check sensor init data with threshold
+        CHECK_THRESHOLD = validation_threshold
+        init_tactile_table = {}
+        for id in [134, 135, 136, 137, 138, 139]:
+            data = self.latest_tactile[id]["data"]
+            if not np.all(np.abs(data) < CHECK_THRESHOLD):
+                init_tactile_table[id] = data
+                
+                
+        return True, init_tactile_table
         
         
     
-    def record(self):
+    def record(self, init_tactile_table):
         frame_queue = Queue(maxsize=10)
         camera_thread = threading.Thread(target=self.camera_worker, args=(frame_queue,))
         camera_thread.daemon = True
         camera_thread.start()
+
+        tactile_thread = threading.Thread(target=self.tactile_worker, args=(init_tactile_table,))
+        tactile_thread.daemon = True
+        tactile_thread.start()
         
         self.start_time = time.perf_counter()
         fps_interval = 1.0 / self.fps
         next_frame_time = self.start_time
-
-        tactile_thread = threading.Thread(target=self.tactile_worker)
-        tactile_thread.daemon = True
-        tactile_thread.start()
         
         while time.perf_counter() - self.start_time < self.record_duration:
             now = time.perf_counter()
@@ -204,19 +225,21 @@ class EpisodeManager:
         print("\n================")
         print(f"[Episode {idx}]")
         input("Press enter when ready: ")
-
-        print("     => Preparing for recording")
-        self._play_start_sounds()
-        print("     => Starting recording")
         
+        print("     => Preparing for recording")
         try:
             with EpisodeRecorder(episode_dir, self.record_duration, self.fps, tactile_port=self.tactile_port) as recorder:
-                # if not recorder.validate_sensors(validation_duration=2.0):
-                #     print("     => Validation failed. Please check the sensors.")
-                #     return False, idx
-                recorder.record()
+                success, init_tactile_table = recorder.validate_sensors(validation_duration=2.0, validation_threshold=10)
+                if not success:
+                    raise RuntimeError("Validation failed. Please check the sensors.")
+                
+                self._play_start_sounds()
+                print("     => Starting recording")
+                recorder.record(init_tactile_table)
+                
         except Exception as e:
-            print(f"Resource preparation / recording failed: {e}")
+            print(f"Recording failed: {e}")
+            shutil.rmtree(episode_dir)
             return False, idx
 
         print("     => Recording finished")

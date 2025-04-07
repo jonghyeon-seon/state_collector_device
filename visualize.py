@@ -265,7 +265,7 @@ def animate_live_tactile_video(tactile_port="/dev/ttyACM0"):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--filepath', type=str, default='/Users/jhseon_mac/Desktop/projects/scv/dataset/holiworld_/epi_000002/tactile.json')
+    parser.add_argument('--filepath', type=str, default='/Users/jhseon_mac/Desktop/projects/scv/dataset/holiworld_s/epi_000104/tactile.json')
     parser.add_argument('--live', action='store_true')
     parser.add_argument('--tactile_port', type=str, default='/dev/ttyACM0')
     args = parser.parse_args()

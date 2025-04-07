@@ -22,7 +22,7 @@ def main():
         END_SOUND_PATH, 
         tactile_port=TACTILE_PORT,
         fps=20.0, 
-        record_duration=15.0
+        record_duration=3.0
     )
     
     print(episode_manager.intro_message)
