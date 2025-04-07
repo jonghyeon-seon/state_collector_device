@@ -27,7 +27,7 @@ class EpisodeRecorder:
         self.tactile_data_list = []
         self.half_width = None
         self.height = None
-        self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        self.fourcc = cv2.VideoWriter_fourcc(*'avc1')
         self.left_video_path = os.path.join(episode_dir, "left_video.mp4")
         self.right_video_path = os.path.join(episode_dir, "right_video.mp4")
         self.tactile_json_path = os.path.join(episode_dir, "tactile.json")
